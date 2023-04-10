@@ -3,7 +3,7 @@
   Properties
   {
     _Curvature_Step("Curvature step", float) = .0001
-    _Min_Hit_Dist("Min hit distance", float) = .001
+    _Min_Hit_Dist("Min hit distance", float) = .0001
     _Max_Dist("Max ray length", float) = 100.0
     _Ray_March_Steps("Ray march steps", float) = 32
 		_Cubemap("Cubemap", Cube) = "" {}

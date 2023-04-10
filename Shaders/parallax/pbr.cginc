@@ -69,7 +69,7 @@ UnityIndirect GetIndirect(v2f i, float3 view_dir, float3 normal,
   return indirect;
 }
 
-fixed4 getLitColor(v2f i, fixed4 albedo, float3 worldPos, float3 normal,
+float4 getLitColor(v2f i, float4 albedo, float3 worldPos, float3 normal,
     float metallic, float smoothness,
     bool custom_cubemap)
 {
@@ -80,13 +80,13 @@ fixed4 getLitColor(v2f i, fixed4 albedo, float3 worldPos, float3 normal,
 
   float3 view_dir = normalize(_WorldSpaceCameraPos - i.worldPos);
 
-  fixed3 pbr = UNITY_BRDF_PBS(albedo, specular_tint,
+  float3 pbr = UNITY_BRDF_PBS(albedo, specular_tint,
       one_minus_reflectivity, smoothness,
       view_dir, normal,
       GetLight(i, worldPos, normal),
       GetIndirect(i, view_dir, normal, smoothness, custom_cubemap)).rgb;
 
-  return fixed4(saturate(pbr), albedo.a);
+  return float4(saturate(pbr), albedo.a);
 }
 
 #endif  // __PBR_INC

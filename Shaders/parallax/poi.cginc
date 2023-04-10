@@ -1,3 +1,6 @@
+#ifndef __POI_INC
+#define __POI_INC
+
 /*
 MIT License
 
@@ -53,3 +56,5 @@ float3 HSVtoRGB(in float3 HSV)
   float3 RGB = HUEtoRGB(HSV.x);
   return ((RGB - 1) * HSV.y + 1) * HSV.z;
 }
+
+#endif  // __POI_INC

@@ -1,3 +1,6 @@
 # vim cruft
 .*.swp
 .*.swo
+
+# unity files
+*.meta
