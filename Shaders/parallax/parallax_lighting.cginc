@@ -302,8 +302,16 @@ float4 effect(inout v2f i, out float depth)
       const float metallic = getLayerMetallic(uv, (int) layer);
       const float smoothness = 1.0 - getLayerRoughness(uv, (int) layer);
 
-      bool custom_cubemap = (layer == 1);
-      float4 lit_color = getLitColor(i, color, pp, normal, metallic, smoothness, custom_cubemap);
+      bool custom_cubemap = true;
+      float4 lit_color;
+
+      // Hack: Bright cubemaps cause glare on rough surfaces. To prevent this,
+      // switch to unlit shading when shading a perfectly rough material.
+      if (smoothness == 0.0) {
+        lit_color = color;
+      } else {
+        lit_color = getLitColor(i, color, pp, normal, metallic, smoothness, custom_cubemap);
+      }
 
       lit_color.rgb += color.rgb * getLayerEmission(layer);
 
@@ -314,7 +322,6 @@ float4 effect(inout v2f i, out float depth)
       result.a += a_increment;
     }
   }
-
 
   // No ray hit: return default material
   float base_depth = depth;
