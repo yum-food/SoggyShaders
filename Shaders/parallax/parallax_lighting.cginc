@@ -20,21 +20,26 @@ float _Min_Hit_Dist;
 float _Max_Dist;
 float _Ray_March_Steps;
 
+#ifdef LAYER0_TEXTURES_ON
 sampler2D _Layer0_BaseColor;
-sampler2D _Layer1_BaseColor;
-sampler2D _Layer2_BaseColor;
-
 sampler2D _Layer0_Normal;
-sampler2D _Layer1_Normal;
-sampler2D _Layer2_Normal;
-
 sampler2D _Layer0_Metallic;
-sampler2D _Layer1_Metallic;
-sampler2D _Layer2_Metallic;
-
 sampler2D _Layer0_Roughness;
+#endif
+
+#ifdef LAYER1_TEXTURES_ON
+sampler2D _Layer1_BaseColor;
+sampler2D _Layer1_Normal;
+sampler2D _Layer1_Metallic;
 sampler2D _Layer1_Roughness;
+#endif
+
+#ifdef LAYER2_TEXTURES_ON
+sampler2D _Layer2_BaseColor;
+sampler2D _Layer2_Normal;
+sampler2D _Layer2_Metallic;
 sampler2D _Layer2_Roughness;
+#endif
 
 float _Layer0_Offset;
 float _Layer0_XScale;
@@ -50,6 +55,12 @@ float _Layer2_Offset;
 float _Layer2_XScale;
 float _Layer2_YScale;
 float _Layer2_Emission;
+
+#ifdef IRIDESCENCE_TEXTURES_ON
+sampler2D _Iridescence_Ramp;
+sampler2D _Iridescence_Normal;
+float _Iridescence_Offset;
+#endif
 
 void getVertexLightColor(inout v2f i)
 {
@@ -98,12 +109,18 @@ float4 getLayerBaseColor(in float2 uv, in int layer)
 {
   [forcecase]
   switch (layer) {
+    #ifdef LAYER0_TEXTURES_ON
     case 0:
       return tex2Dgrad(_Layer0_BaseColor, uv, ddx(uv.x), ddy(uv.y));
+    #endif
+    #ifdef LAYER1_TEXTURES_ON
     case 1:
       return tex2Dgrad(_Layer1_BaseColor, uv, ddx(uv.x), ddy(uv.y));
+    #endif
+    #ifdef LAYER2_TEXTURES_ON
     case 2:
       return tex2Dgrad(_Layer2_BaseColor, uv, ddx(uv.x), ddy(uv.y));
+    #endif
     default:
       return 0.0;
   }
@@ -113,12 +130,18 @@ float3 getLayerNormal(in float2 uv, in int layer)
 {
   [forcecase]
   switch (layer) {
+    #ifdef LAYER0_TEXTURES_ON
     case 0:
       return tex2Dgrad(_Layer0_Normal, uv, ddx(uv.x), ddy(uv.y));
+    #endif
+    #ifdef LAYER1_TEXTURES_ON
     case 1:
       return tex2Dgrad(_Layer1_Normal, uv, ddx(uv.x), ddy(uv.y));
+    #endif
+    #ifdef LAYER2_TEXTURES_ON
     case 2:
       return tex2Dgrad(_Layer2_Normal, uv, ddx(uv.x), ddy(uv.y));
+    #endif
     default:
       return 0.0;
   }
@@ -128,12 +151,18 @@ float getLayerMetallic(in float2 uv, in int layer)
 {
   [forcecase]
   switch (layer) {
+    #ifdef LAYER0_TEXTURES_ON
     case 0:
       return tex2Dgrad(_Layer0_Metallic, uv, ddx(uv.x), ddy(uv.y));
+    #endif
+    #ifdef LAYER1_TEXTURES_ON
     case 1:
       return tex2Dgrad(_Layer1_Metallic, uv, ddx(uv.x), ddy(uv.y));
+    #endif
+    #ifdef LAYER2_TEXTURES_ON
     case 2:
       return tex2Dgrad(_Layer2_Metallic, uv, ddx(uv.x), ddy(uv.y));
+    #endif
     default:
       return 0.0;
   }
@@ -143,12 +172,18 @@ float getLayerRoughness(in float2 uv, in int layer)
 {
   [forcecase]
   switch (layer) {
+    #ifdef LAYER0_TEXTURES_ON
     case 0:
       return tex2Dgrad(_Layer0_Roughness, uv, ddx(uv.x), ddy(uv.y));
+    #endif
+    #ifdef LAYER1_TEXTURES_ON
     case 1:
       return tex2Dgrad(_Layer1_Roughness, uv, ddx(uv.x), ddy(uv.y));
+    #endif
+    #ifdef LAYER2_TEXTURES_ON
     case 2:
       return tex2Dgrad(_Layer2_Roughness, uv, ddx(uv.x), ddy(uv.y));
+    #endif
     default:
       return 0.0;
   }
@@ -298,15 +333,34 @@ float4 effect(inout v2f i, out float depth)
       if (color.a < 0.9) {
         color.a = 0.0;
       }
-      const float3 normal = getLayerNormal(uv, (int) layer);
+      float3 normal = getLayerNormal(uv, (int) layer);
       const float metallic = getLayerMetallic(uv, (int) layer);
       const float smoothness = 1.0 - getLayerRoughness(uv, (int) layer);
 
       bool custom_cubemap = true;
-      float4 lit_color;
+
+      // Iridescence
+#ifdef IRIDESCENCE_TEXTURES_ON
+      if (smoothness > 0.0)
+      {
+        float3 ir_normal = normalize(tex2Dgrad(_Iridescence_Normal, uv, ddx(uv.x), ddy(uv.y)));
+
+        float3 camera_position = _WorldSpaceCameraPos.xyz;
+
+        float3 obj_normal = i.normal;
+
+        float ndotl = dot(view_dir, normalize(normal + obj_normal));
+        ndotl = glsl_mod(ndotl + _Iridescence_Offset, 1.0);
+
+        float3 ir_color = tex2Dgrad(_Iridescence_Ramp, ndotl, ddx(ndotl), ddy(ndotl));
+        color.rgb = lerp(color.rgb, ir_color, dot(ir_color, ir_color));
+        normal = lerp(normal, ir_normal, dot(ir_color, ir_color));
+      }
+#endif
 
       // Hack: Bright cubemaps cause glare on rough surfaces. To prevent this,
       // switch to unlit shading when shading a perfectly rough material.
+      float4 lit_color;
       if (smoothness == 0.0) {
         lit_color = color;
       } else {

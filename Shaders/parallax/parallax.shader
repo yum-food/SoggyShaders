@@ -1,4 +1,4 @@
-﻿Shader "yum_food/parallax"
+Shader "yum_food/parallax"
 {
   Properties
   {
@@ -34,6 +34,10 @@
     _Layer2_XScale("Layer 2 X Scale", float) = 1.0
     _Layer2_YScale("Layer 2 Y Scale", float) = 1.0
     _Layer2_Emission("Layer 2 Emission strength", float) = 0.0
+
+    _Iridescence_Ramp("Iridescence ramp", 2D) = "black" {}
+    _Iridescence_Normal("Iridescence normal", 2D) = "bump" {}
+    _Iridescence_Offset("Iridescence offset", float) = 0.0
   }
   SubShader
   {
@@ -58,6 +62,11 @@
 
       #define FORWARD_BASE_PASS
 
+      #define LAYER0_TEXTURES_ON
+      #define LAYER1_TEXTURES_ON
+      #define LAYER2_TEXTURES_ON
+      #define IRIDESCENCE_TEXTURES_ON
+
       #include "parallax_lighting.cginc"
       ENDCG
     }
@@ -79,6 +88,11 @@
 
       #pragma vertex vert
       #pragma fragment frag
+
+      #define LAYER0_TEXTURES_ON
+      #define LAYER1_TEXTURES_ON
+      #define LAYER2_TEXTURES_ON
+      #define IRIDESCENCE_TEXTURES_ON
 
       #include "parallax_lighting.cginc"
       ENDCG
