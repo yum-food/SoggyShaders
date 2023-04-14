@@ -4,8 +4,8 @@ Shader "yum_food/displacement"
   {
     _BaseColor("Base color", 2D) = "white" {}
     _Normal("Normal", 2D) = "bump" {}
-    _Disable_Normal_Texture("Disable normal texture", float) = 0.0
-    _Metallic("Metallic", 2D) = "black" {}
+    _Disable_Normal_Texture("Disable normal texture", float) = 1.0
+    _Metallic("Metallic", 2D) = "white" {}
     _Roughness("Roughness", 2D) = "black" {}
 		_Cubemap("Cubemap", Cube) = "" {}
 
@@ -36,7 +36,7 @@ Shader "yum_food/displacement"
       Blend SrcAlpha OneMinusSrcAlpha
       ZWrite On
       ZTest LEqual
-      Cull Off
+      Cull Back
 
       CGPROGRAM
       #pragma target 5.0
@@ -53,7 +53,7 @@ Shader "yum_food/displacement"
       // 0: no anti-aliasing
       // 1: sample 4 neighbors (diagonals)
       // 2: sample 8 neighbors (diagonals + cartesian)
-      #define OFFSET_AA_LEVEL 2
+      #define HEIGHT_AA_LEVEL 2
 
       #include "displacement_lighting.cginc"
       ENDCG
@@ -67,7 +67,7 @@ Shader "yum_food/displacement"
       Blend One One
       ZWrite On
       ZTest LEqual
-      Cull Off
+      Cull Back
 
       CGPROGRAM
       #pragma target 5.0
@@ -78,7 +78,7 @@ Shader "yum_food/displacement"
       #pragma geometry geom
       #pragma fragment frag
 
-      #define OFFSET_AA_LEVEL 2
+      #define HEIGHT_AA_LEVEL 2
 
       #include "displacement_lighting.cginc"
       ENDCG

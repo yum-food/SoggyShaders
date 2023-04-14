@@ -12,6 +12,7 @@ struct v2f
   float2 uv : TEXCOORD0;
   float3 normal : TEXCOORD1;
   float3 worldPos : TEXCOORD2;
+
   float3 objPos : TEXCOORD3;
 
   #if defined(VERTEXLIGHT_ON)
