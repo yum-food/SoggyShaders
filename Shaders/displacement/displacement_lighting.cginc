@@ -14,6 +14,8 @@ sampler2D _Normal;
 sampler2D _Metallic;
 sampler2D _Roughness;
 
+bool _Disable_Normal_Texture;
+
 sampler2D _Height;
 float _Height_LOD;
 float _Height_Exponent;
@@ -80,16 +82,8 @@ v2f vert(appdata v)
 
 void displace(inout v2f vert)
 {
-  float3 object_offset = transpose(unity_ObjectToWorld)[3].xyz;
-  float4x4 object_rotate = float4x4(
-      unity_ObjectToWorld[0].xyz, 0,
-      unity_ObjectToWorld[1].xyz, 0,
-      unity_ObjectToWorld[2].xyz, 0,
-      0, 0, 0, 1
-      );
-
   // Manipulate vertex in world space.
-  float3 pp = 0;
+  float height = 0;
 
   float2 traveling_uv = vert.uv;
   traveling_uv.x += _Time[0] * _Height_Speed_X;
@@ -113,20 +107,20 @@ void displace(inout v2f vert)
   #endif
 
   #if OFFSET_AA_LEVEL == 0
-  pp.z += z0;
+  height += z0;
   #elif OFFSET_AA_LEVEL == 1
-  pp.z += (z0 + z1 + z2 + z3 + z4) / 5.0;
+  height += (z0 + z1 + z2 + z3 + z4) / 5.0;
   #elif OFFSET_AA_LEVEL == 2
-  pp.z += (z0 + z1 + z2 + z3 + z4 + z5 + z6 + z7 + z8) / 9.0;
+  height += (z0 + z1 + z2 + z3 + z4 + z5 + z6 + z7 + z8) / 9.0;
   #endif
 
-  pp.z = pow(pp.z, _Height_Exponent);
-  pp.z *= _Height_Scale;
+  height = pow(height, _Height_Exponent);
+  height *= _Height_Scale;
 
   {
     float mask = tex2Dlod(_Height_Mask, float4(vert.uv, _Height_LOD, 0));
     mask = pow(mask, _Height_Mask_Exponent);
-    pp.z *= mask;
+    height *= mask;
   }
   
   // 0 at middle, 1 or -1 at edges
@@ -143,12 +137,10 @@ void displace(inout v2f vert)
     float ring_scale = exp(-1.0 * ring_dist);
 
     float middle_out_height = ring_scale;
-    pp.z *= middle_out_height;
+    height *= middle_out_height;
   }
 
-  pp = mul(object_rotate, float4(pp, 1.0)).xyz;
-
-  vert.worldPos += pp;
+  vert.worldPos += height * vert.normal;
   vert.objPos = mul(unity_WorldToObject, float4(vert.worldPos, 1.0));
   vert.clipPos = UnityObjectToClipPos(vert.objPos);
 }
@@ -187,7 +179,7 @@ float4 effect(inout v2f i, out float depth)
   depth = -1000.0;
 
   float4 albedo = tex2D(_BaseColor, i.uv);
-  float3 normal = tex2D(_Normal, i.uv);
+  float3 normal = _Disable_Normal_Texture ? i.normal : tex2D(_Normal, i.uv);
   float metallic = tex2D(_Metallic, i.uv);
   float roughness = tex2D(_Roughness, i.uv);
   if (albedo.a > 0) {

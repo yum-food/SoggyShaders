@@ -4,6 +4,7 @@ Shader "yum_food/displacement"
   {
     _BaseColor("Base color", 2D) = "white" {}
     _Normal("Normal", 2D) = "bump" {}
+    _Disable_Normal_Texture("Disable normal texture", float) = 0.0
     _Metallic("Metallic", 2D) = "black" {}
     _Roughness("Roughness", 2D) = "black" {}
 		_Cubemap("Cubemap", Cube) = "" {}
