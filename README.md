@@ -20,3 +20,21 @@ In these demos, I have the shader on a quad.
 
 Full demo video [here](https://youtu.be/WvPdqxmrZzI).
 
+## Displacement
+
+![Displacement demo](Demos/displacement_demo.gif)
+
+A simple displacement shader.
+
+* Displacement height is specified with a texture.
+* Height texture can be translated at configurable X/Y speeds, giving a
+  flowy effect.
+* Height can be masked to concentrate height mapping into specific areas.
+* A built-in center-out effect is available.
+* Basic physically-based shading is implemented (albedo with alpha, normal,
+  roughness, metallic, cubemap).
+
+In these demos, I have the shader on a 100x100 plane.
+
+Full demo video [here](https://youtu.be/Giui4aCjtI0).
+
