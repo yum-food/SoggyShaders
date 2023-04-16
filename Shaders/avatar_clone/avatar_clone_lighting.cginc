@@ -37,8 +37,13 @@ float _Center_Out_Max_Radius;
 
 float _Num_Clones;
 float _Clone_dx;
+float _Clone_dx_cents;
 float _Clone_dy;
 float _Clone_dz;
+float _Clone_Scale;
+float _Clone_Enable_Av_Height_Fix;
+float _Clone_Av_Height_Fix;
+float _Clone_Enable_Rotation;
 
 struct appdata
 {
@@ -210,12 +215,12 @@ void geom(triangle v2f tri_in[3],
 
   // Math from here:
   //   http://tonfilm.blogspot.com/2007/01/calculate-normals-in-shader.html
-  for (uint i = 0; i < 3; i++) {
-    v2f v0 = tri_in[(i + 0) % 3];
-    v2f v1 = tri_in[(i + 1) % 3];
-    v2f v2 = tri_in[(i + 2) % 3];
+  if (!_Disable_Normal_Recalc) {
+    for (uint i = 0; i < 3; i++) {
+      v2f v0 = tri_in[(i + 0) % 3];
+      v2f v1 = tri_in[(i + 1) % 3];
+      v2f v2 = tri_in[(i + 2) % 3];
 
-    if (!_Disable_Normal_Recalc) {
       float3 aa_normal = 0;
       aa_normal += getNormal(v0, v1, v2, 0.3);
       aa_normal += getNormal(v0, v1, v2, 0.4);
@@ -239,23 +244,43 @@ void geom(triangle v2f tri_in[3],
   tri_out.Append(t2);
   tri_out.RestartStrip();
 
+  float4x4 object_rotate = float4x4(
+      unity_ObjectToWorld[0].xyz, 0,
+      0, 1, 0, 0,
+      unity_ObjectToWorld[2].xyz, 0,
+      0, 0, 0, 1
+      );
+  float3 object_offset = transpose(unity_ObjectToWorld)[3].xyz;
+
   const int num_clones = max((int) floor(_Num_Clones), 0);
   for (int i = 2; i < num_clones + 2; i++) {
     v2f t0p = t0;
     v2f t1p = t1;
     v2f t2p = t2;
 
-    t0p.worldPos.x += _Clone_dx * (i / 2) * (i % 2 == 0 ? 1.0 : -1.0);
-    t0p.worldPos.y += _Clone_dy * (i / 2);
-    t0p.worldPos.z += _Clone_dz * (i / 2);
+    float3 dpos = 0;
 
-    t1p.worldPos.x += _Clone_dx * (i / 2) * (i % 2 == 0 ? 1.0 : -1.0);
-    t1p.worldPos.y += _Clone_dy * (i / 2);
-    t1p.worldPos.z += _Clone_dz * (i / 2);
+    if (_Clone_Enable_Av_Height_Fix) {
+      dpos.y += _Clone_Av_Height_Fix * pow(_Clone_Scale, i / 2) - object_offset.y;
+    }
 
-    t2p.worldPos.x += _Clone_dx * (i / 2) * (i % 2 == 0 ? 1.0 : -1.0);
-    t2p.worldPos.y += _Clone_dy * (i / 2);
-    t2p.worldPos.z += _Clone_dz * (i / 2);
+    dpos.x += (_Clone_dx + _Clone_dx_cents * 0.01) * (i / 2) * (i % 2 == 0 ? 1.0 : -1.0);
+    dpos.y += _Clone_dy * (i / 2);
+    dpos.z += _Clone_dz * (i / 2);
+
+    if (_Clone_Enable_Rotation) {
+      dpos = mul(object_rotate, float4(dpos, 1.0));
+    }
+
+    t0p.worldPos += dpos;
+    t1p.worldPos += dpos;
+    t2p.worldPos += dpos;
+
+#if 1
+    t0p.worldPos = (t0p.worldPos - (dpos + object_offset)) * pow(_Clone_Scale, i / 2) + (dpos + object_offset);
+    t1p.worldPos = (t1p.worldPos - (dpos + object_offset)) * pow(_Clone_Scale, i / 2) + (dpos + object_offset);
+    t2p.worldPos = (t2p.worldPos - (dpos + object_offset)) * pow(_Clone_Scale, i / 2) + (dpos + object_offset);
+#endif
 
     t0p.objPos = mul(unity_WorldToObject, float4(t0p.worldPos, 1.0));
     t0p.clipPos = UnityObjectToClipPos(t0p.objPos);

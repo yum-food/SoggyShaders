@@ -29,9 +29,14 @@ Shader "yum_food/avatar_clone"
     _Center_Out_Max_Radius("Center out max radius", float) = 2.7
 
     [IntRange] _Num_Clones("Number of clones", Range(0, 4)) = 0
-    _Clone_dx("Clone 0 dx", float) = 1.0
-    _Clone_dy("Clone 0 dy", float) = 0.0
-    _Clone_dz("Clone 0 dz", float) = 0.0
+    _Clone_dx("Clone dx", float) = 1.0
+    _Clone_dx_cents("Clone dx (cents)", float) = 0.0
+    _Clone_dy("Clone dy", float) = 0.0
+    _Clone_dz("Clone dz", float) = 0.0
+    _Clone_Scale("Clone scale", float) = 1.0
+    [ToggleUI] _Clone_Enable_Av_Height_Fix("Clone avatar height fix", float) = 0.0
+    _Clone_Av_Height_Fix("Clone avatar height fix", float) = 0.0
+    [ToggleUI] _Clone_Enable_Rotation("Enable clone rotation", float) = 0.0
   }
   SubShader
   {
