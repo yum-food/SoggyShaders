@@ -9,6 +9,20 @@ Then assign the shader you want (like yum\_food/parallax) to a material.
 
 Please ask setup questions [on the discord](https://discord.gg/YWmCvbCRyn).
 
+## Grass (`yum_food/grass`)
+
+![Grass demo](Demos/grass_demo.PNG)
+
+A simple geometry shader that repeats a tile of grass 16 times and uses a noise texture to apply a wind effect on the geometry.
+
+Right now only the noise texture is configurable.
+
+Measured @ ~3.0 ms per frame at 4k
+
+TODO: add a mask to enable controlling where grass spawns.
+
+See `Shaders/grass/grass_10m_tile.prefab`.
+
 ## Parallax (`yum_food/parallax`)
 
 ![Parallax demo](Demos/parallax_demo.gif)

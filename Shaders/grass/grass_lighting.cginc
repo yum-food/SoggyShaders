@@ -181,6 +181,7 @@ float4 effect(inout v2f i, out float depth)
     float3 c = lerp(brown, green, uv_phase);
     albedo = float4(c, 1.0);
   }
+  albedo *= 0.8;
 
   float3 normal = i.normal;
   // Rotate the normals a little to make the blades of grass appear more
