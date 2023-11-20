@@ -104,6 +104,11 @@ void geom(triangle v2f tri_in[3],
     v1.worldPos += float3(xoff, 0, yoff);
     v2.worldPos += float3(xoff, 0, yoff);
 
+    // Don't bother rendering geometry if it's too far away.
+    if (length(v0.worldPos - _WorldSpaceCameraPos) > 35) {
+      continue;
+    }
+
     // Omit polygons in blacklisted regions.
     {
       float2 p0 = float2(-4, 0);
