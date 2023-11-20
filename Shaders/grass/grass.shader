@@ -9,6 +9,7 @@ Shader "yum_food/grass"
     _Roughness("Roughness", 2D) = "black" {}
 
     _Wind_Speed("Wind Speed", 2D) = "black" {}
+    _Offset("Offset", Vector) = (0,0,0,0)
 
 		//_Cubemap("Cubemap", Cube) = "" {}
 

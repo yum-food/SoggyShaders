@@ -14,6 +14,7 @@ sampler2D _Normal;
 sampler2D _Metallic;
 sampler2D _Roughness;
 sampler2D _Wind_Speed;
+float4 _Offset;
 
 bool _Disable_Normal_Texture;
 
@@ -92,6 +93,9 @@ void geom(triangle v2f tri_in[3],
   for (int y = 0; y < 4; y++) {
     float xoff = (x - 1) * 10;
     float yoff = (y - 1) * 10;
+    xoff += _Offset.x;
+    yoff += _Offset.y;
+
     v2f v0 = tri_in[0];
     v2f v1 = tri_in[1];
     v2f v2 = tri_in[2];
@@ -99,6 +103,30 @@ void geom(triangle v2f tri_in[3],
     v0.worldPos += float3(xoff, 0, yoff);
     v1.worldPos += float3(xoff, 0, yoff);
     v2.worldPos += float3(xoff, 0, yoff);
+
+    // Omit polygons in blacklisted regions.
+    {
+      float2 p0 = float2(-4, 0);
+      float2 p1 = float2(8, 6);
+      p0 -= 0.2;
+      p1 += 0.2;
+      if (v0.worldPos.x > p0.x &&
+          v0.worldPos.z > p0.y &&
+          v0.worldPos.x < p1.x &&
+          v0.worldPos.z < p1.y) {
+        continue;
+      }
+      p0 = float2(1.5, 6);
+      p1 = float2(2.5, 24);
+      p0 -= 0.2;
+      p1 += 0.2;
+      if (v0.worldPos.x > p0.x &&
+          v0.worldPos.z > p0.y &&
+          v0.worldPos.x < p1.x &&
+          v0.worldPos.z < p1.y) {
+        continue;
+      }
+    }
 
     // Apply wind using a noise texture.
     for (int i = 0; i < 3; i++)
@@ -121,17 +149,17 @@ void geom(triangle v2f tri_in[3],
       float3 wind_point = vertex_pos;
       wind_point *= .02;
       wind_point.x -= _Time[0]/2;
-      float3 dx = float3(.02, 0, 0);
+      float dx = .02;
 
       float w0 = tex2Dlod(_Wind_Speed, float4(wind_point.x, wind_point.z, 0, 0));
-      float w1 = tex2Dlod(_Wind_Speed, float4(wind_point.x + dx.x, wind_point.z, 0, 0));
-      float w2 = tex2Dlod(_Wind_Speed, float4(wind_point.x, wind_point.z + dx.x, 0, 0));
+      float w1 = tex2Dlod(_Wind_Speed, float4(wind_point.x + dx, wind_point.z, 0, 0));
+      float w2 = tex2Dlod(_Wind_Speed, float4(wind_point.x, wind_point.z + dx, 0, 0));
 
       float2 wind_speed = float2(w1 - w0, w2 - w0);
       wind_speed *= 4;
       wind_speed *= vertex_pos.y;
 
-      switch (i) {
+      [forcecase] switch (i) {
         case 0:
           v0.worldPos += float3(wind_speed.x, 0, wind_speed.y);
           break;
@@ -144,6 +172,7 @@ void geom(triangle v2f tri_in[3],
       }
     }
 
+    // Apply transformed worldPos to other coordinate systems.
     v0.objPos = mul(unity_WorldToObject, v0.worldPos);
     v1.objPos = mul(unity_WorldToObject, v1.worldPos);
     v2.objPos = mul(unity_WorldToObject, v2.worldPos);
@@ -152,6 +181,7 @@ void geom(triangle v2f tri_in[3],
     v1.clipPos = UnityObjectToClipPos(v1.objPos);
     v2.clipPos = UnityObjectToClipPos(v2.objPos);
 
+    // Output transformed geometry.
     tri_out.Append(v0);
     tri_out.Append(v1);
     tri_out.Append(v2);
@@ -159,17 +189,8 @@ void geom(triangle v2f tri_in[3],
   }
 }
 
-float getWorldSpaceDepth(in const float3 worldPos)
+float4 effect(inout v2f i)
 {
-  float4 clip_pos = mul(UNITY_MATRIX_VP, float4(worldPos, 1.0));
-  return clip_pos.z / clip_pos.w;
-}
-
-float4 effect(inout v2f i, out float depth)
-{
-  depth = getWorldSpaceDepth(i.worldPos);
-
-  //float4 albedo = tex2D(_BaseColor, i.uv);
   float4 albedo;
   {
     float3 green = HSVtoRGB(float3(.333, .60, .70));
@@ -181,7 +202,8 @@ float4 effect(inout v2f i, out float depth)
     float3 c = lerp(brown, green, uv_phase);
     albedo = float4(c, 1.0);
   }
-  albedo *= 0.8;
+  // Poor man's ambient occlusion
+  albedo *= clamp(i.worldPos.y - .03, 0, 1) * 4;
 
   float3 normal = i.normal;
   // Rotate the normals a little to make the blades of grass appear more
@@ -204,9 +226,9 @@ float4 effect(inout v2f i, out float depth)
       /*custom_cubemap=*/true);
 }
 
-fixed4 frag(v2f i, out float depth : SV_DepthLessEqual) : SV_Target
+fixed4 frag(v2f i) : SV_Target
 {
-  return effect(i, depth);
+  return effect(i);
 }
 
 #endif  // GRASS_LIGHTING
